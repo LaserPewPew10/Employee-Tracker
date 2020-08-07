@@ -34,8 +34,6 @@ function mainMenu() {
         "View all the roles",
         "View all the departments",
         "View all employees",
-        "View all employees by role",
-        "View all employees by department",
         "Add employee",
         "Add role",
         "Add department",
@@ -219,31 +217,39 @@ function mainMenu() {
       res
     ) {
       if (err) throw err;
-      console.log(JSON.stringify(res));
-      roleArray = res;
-      //loop through res. and for each object in the res array create a new object {name: object.title, value, object.id} and add it to
-      //the role array
-
-      inquirer
-        .prompt([
-          {
-            name: "role",
-            type: "list",
-            message: "What is this new role?",
-            choices: roleArray,
-          },
-          {
-            name: "employee",
-            type: "list",
-            message: "What employee would you like to edit?",
-            choices: employeeArray,
-          },
-        ])
-        .then((answer) => {
-          connection.query(
-            `UPDATE employee SET roles_id = ${answer.role} WHERE id = ${answer.employee}`
-          );
-        });
+      for (i = 0; i < res.length; i++) {
+        roleArray.push(res[i].title);
+      }
+      connection.query(
+        "SELECT employee.id, concat(employee.first_name, employee.last_name) AS Employee FROM employee ORDER BY employee ASC",
+        function (err, res) {
+          if (err) throw err;
+          for (i = 0; i < res.length; i++) {
+            employeeArray.push(res[i].Employee);
+          }
+          inquirer
+            .prompt([
+              {
+                name: "role",
+                type: "list",
+                message: "What is this new role?",
+                choices: roleArray,
+              },
+              {
+                name: "employee",
+                type: "list",
+                message: "What employee would you like to edit?",
+                choices: employeeArray,
+              },
+            ])
+            .then((answer) => {
+              connection.query(
+                `UPDATE employee SET roles_id = ${answer.role} WHERE id = ${answer.employee}`
+              );
+            })
+            .catch((err) => console.log(err));
+        }
+      );
     });
   }
 }
